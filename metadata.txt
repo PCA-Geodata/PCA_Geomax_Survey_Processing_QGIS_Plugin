@@ -1,0 +1,51 @@
+# This file contains metadata for your plugin.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=PCA Geomax Survey Processing
+qgisMinimumVersion=3.0
+description=PCA Geomax Survey Processing is an internal QGIS Plugin specifically built for PCA survey data management and processing purposes.
+version=1.01
+author=Valerio Pinna
+email=pinnavalerio@yahoo.co.uk
+
+about=PCA Geomax Survey Processing is an internal QGIS Plugin specifically built for PCA survey data management and processing purposes.
+
+	  It is a component of the new DRS/GIS integrated data management system, and it is based both in the new Geomax codelist system and in the raw survey data exported on shapefile format. 
+	  
+	  The current version of the plugin is compatible with the Geomax codelist version draft 4.2. A dedicated help in the toolbar provides more inforamtions and detailed use procedure.
+
+tracker=https://github.com/PCA-Geodata/PCA_Geomax_Survey_Processing_QGIS_Plugin/issues
+repository=https://github.com/PCA-Geodata/PCA_Geomax_Survey_Processing_QGIS_Plugin
+# End of mandatory metadata
+
+# Recommended items:
+
+hasProcessingProvider=no
+# Uncomment the following line and add your changelog:
+# changelog= v 1.01 released on 05/09/2022 on the PCA Repository 
+
+# Tags are comma separated with spaces allowed
+tags=python PCA Geomax survey 
+
+homepage=https://github.com/PCA-Geodata/PCA_Geomax_Survey_Processing_QGIS_Plugin
+category=Plugins
+icon=icons/geomax_processing_copy_paste_icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+
+# Since QGIS 3.8, a comma separated list of plugins to be installed
+# (or upgraded) can be specified.
+# Check the documentation for more information.
+# plugin_dependencies=
+
+Category of the plugin: Raster, Vector, Database or Web
+# category= Plugin
+
+# If the plugin can run on QGIS Server.
+server=False
+

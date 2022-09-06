@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/plugins/pca_geomax_survey_processing" >
+        <file>icons/geomax_processing_import_icon.png</file>
+		<file>icons/geomax_processing_copy_paste_icon.png</file>
+		<file>icons/geomax_backup_gpkg_icon.png</file>
+		<file>icons/pca_logo_icon.png</file>
+		<file>icons/geomax_update_DRS_icon.png</file>
+		<file>icons/geomax_help_icon.png</file>
+		<file>icons/geomax_help_icon_v2.png</file>
+    </qresource>
+</RCC>
