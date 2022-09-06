@@ -1,5 +1,5 @@
 
-<img src="PCA_Geomax_Survey_Processing/help/img/PCA_geomax_plugin_toolbar.png" />
+<img src="PCA_Geomax_Survey_Processing/help/img/PCA_geomax_plugin_toolbar_v3.png" />
 
 
 
