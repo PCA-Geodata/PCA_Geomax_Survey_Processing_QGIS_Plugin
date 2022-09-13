@@ -6,7 +6,7 @@
 name=PCA Geomax Survey Processing
 qgisMinimumVersion=3.0
 description=PCA Geomax Survey Processing is an internal QGIS Plugin specifically built for PCA survey data management and processing purposes.
-version=1.01
+version=1.02
 author=Valerio Pinna
 email=pinnavalerio@yahoo.co.uk
 

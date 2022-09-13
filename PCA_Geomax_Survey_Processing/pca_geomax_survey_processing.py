@@ -28,7 +28,7 @@ from qgis.utils import *
 from datetime import date, datetime
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction,QMessageBox, QToolBar
+from qgis.PyQt.QtWidgets import QAction,QMessageBox, QToolBar, QProgressBar
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
 from PyQt5.QtGui import QIcon
 from qgis.core import *
@@ -86,8 +86,9 @@ class PCA_Geomax_processing:
         #Declare dialogues
         self.dlgtool1 = PCA_Geomax_Import_Processed_SHP_Dialog()
         self.dlgtool2 = PCA_Geomax_copy_shp_to_GIS_layers_processingDialog()
-        self.dlg = PcaGeomaxUpdateDRSTableDialog()
+        self.dlgtool3 = PcaGeomaxUpdateDRSTableDialog()
         self.dlgtool4 = PcaGeomaxBackupGeopackageDialog()
+        
         
         
         self.toolbar = iface.mainWindow().findChild( QToolBar, u'&PCA Geomax Survey Processing' )
@@ -267,6 +268,9 @@ class PCA_Geomax_processing:
         result = self.dlgtool1.exec_()
         # See if OK was pressed
         if result:
+                 
+        
+        
             #add the action here
             
             ##starting time
@@ -292,7 +296,8 @@ class PCA_Geomax_processing:
                         '''The selected folder doesn't contain any shapefile. Please select a valid folder and retry.''')
                 return self.dontdonothing() 
             if len(empty_folder_check) != 0:
-
+                
+                                
                 ###create new group with the date when the survey files were saved
                 #retrieve first file in the folder
                 file = os.listdir(folder)[0]
@@ -425,13 +430,14 @@ class PCA_Geomax_processing:
                         # 'PCA Geomax Survey Processing',
                         # '''The folder \n \n{} \n \nwas successfully deleted.'''.format(path))
                         
-                        ### END - Attempt to remove automaticcaly the files and the folder###
+                        ### END - Attempt to remove automatically the files and the folder###
                     
                 if not os.path.exists(path):
                     os.makedirs(path)
                 if not root.findGroup(group_name):
-                            root.insertGroup(0, group_name)  
-                
+                            root.insertGroup(0, group_name) 
+                            
+                print ('step 1')
                 empty_layers_list = []
                 ##working with any shapefile in the folder
                 for file in glob.glob( folder + "/" + "*.shp" ):
@@ -455,13 +461,13 @@ class PCA_Geomax_processing:
                         crs = new_layer.crs()
                         crs.createFromId(27700)  # Whatever CRS you want
                         new_layer.setCrs(crs)
-                        thenewepsg = new_layer.crs()
+                        # thenewepsg = new_layer.crs()
 
                         writer = QgsVectorFileWriter.writeAsVectorFormat(new_layer,new_path,'utf-8', new_layer.crs(), driverName='ESRI Shapefile')
 
                         processed_layer = QgsVectorLayer(path, filename + '_processed.shp', "ogr")
-                        newepsg = processed_layer.crs()
-
+                        # newepsg = processed_layer.crs()
+                        print ('step 2')
 
                 ##add the processed layers
                 for new_file in glob.glob( path + "/" + "*.shp" ):        
@@ -542,7 +548,7 @@ class PCA_Geomax_processing:
                                                     idx = child.layer().fields().indexFromName('PT_HEIGHT')
                                                     child.layer().renameAttribute(idx, 'Z')
                                                     child.layer().updateFields()
-
+            print('step 3')
 
             ##ending time
             time1= datetime.now()
@@ -568,7 +574,7 @@ class PCA_Geomax_processing:
                
             empty_layers_list.clear()   
                     
-
+         
     def copy_and_paste_to_GIS(self):
         if self.first_start == True:
             self.first_start = False
@@ -920,8 +926,8 @@ class PCA_Geomax_processing:
                     if lay.geometryType() == 4: #nogeometry tables
                         tables_list.append(lay.name())
     
-            self.dlg.DRS_on_GIS_comboBox.clear()
-            self.dlg.DRS_on_GIS_comboBox.addItems(tables_list)
+            self.dlgtool3.DRS_on_GIS_comboBox.clear()
+            self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
         if len(layers_list)== 0:
             iface.messageBar().pushMessage(
                 "PCA Geomax Survey Processing", 
@@ -934,25 +940,25 @@ class PCA_Geomax_processing:
     def update_DRS_table(self):
         if self.first_start == True:
             #self.first_start = False
-            self.dlg = PcaGeomaxUpdateDRSTableDialog()
+            
             self.layers = {layer.name():layer for layer in QgsProject.instance().mapLayers().values() if layer.type()== 0}
             self.get_DRS_table_layer()
         
         # show the dialog
-        self.dlg.show()
+        self.dlgtool3.show()
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.dlgtool3.exec_()
         # See if OK was pressed
         if result:
-            DRS_Table_on_GIS = self.dlg.DRS_on_GIS_comboBox.currentText()
-            new_DRS_csv_file = self.dlg.DRS_new_file_mQgsFileWidget.filePath()
+            DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentText()
+            new_DRS_csv_file = self.dlgtool3.DRS_new_file_mQgsFileWidget.filePath()
            
             if len(DRS_Table_on_GIS) == 0:
                 QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
                 return self.dontdonothing()
              
             else:
-                self.shpLayer = self.layers[self.dlg.DRS_on_GIS_comboBox.currentText()]
+                self.shpLayer = self.layers[self.dlgtool3.DRS_on_GIS_comboBox.currentText()]
                 
                 ###add the new version of the DRS CSV
                 CSV_file_path = new_DRS_csv_file.replace('\\','/')
@@ -963,12 +969,13 @@ class PCA_Geomax_processing:
                 QgsProject.instance().addMapLayer(vlayer)
                 
                 CSV_table = QgsProject.instance().mapLayersByName(DRS_Table_on_GIS)[0]
-
+       
                 external_DRS_CSV = QgsProject.instance().mapLayersByName('Temp_CSV')[0]
 
                 if external_DRS_CSV.isValid() and CSV_table.isValid():
                         if external_DRS_CSV.type() == QgsMapLayer.VectorLayer and \
                         CSV_table.type() == QgsMapLayer.VectorLayer:
+                           
                             with edit(CSV_table):
                                 for feature in CSV_table.getFeatures():
                                     CSV_table.deleteFeature(feature.id())
