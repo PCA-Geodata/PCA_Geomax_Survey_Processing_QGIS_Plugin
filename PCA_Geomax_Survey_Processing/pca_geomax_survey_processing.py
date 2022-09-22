@@ -31,6 +31,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction,QMessageBox, QToolBar, QProgressBar
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
 from qgis.core import *
 from time import sleep
 from shutil import copy
@@ -437,7 +438,24 @@ class PCA_Geomax_processing:
                 if not root.findGroup(group_name):
                             root.insertGroup(0, group_name) 
                             
-                print ('step 1')
+
+                #Create progress bar
+                progressMessageBar = iface.messageBar().createMessage("PCA Geomax Survey Processing Plugin: Preparation and uploading of the layers in progress...")
+                progress = QProgressBar()
+                progress.setMaximum(100)
+                progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+                progressMessageBar.layout().addWidget(progress)
+                iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
+                
+                
+                
+                progress.setValue(0)
+
+
+
+
+
+
                 empty_layers_list = []
                 ##working with any shapefile in the folder
                 for file in glob.glob( folder + "/" + "*.shp" ):
@@ -468,7 +486,7 @@ class PCA_Geomax_processing:
                         processed_layer = QgsVectorLayer(path, filename + '_processed.shp', "ogr")
                         # newepsg = processed_layer.crs()
                         print ('step 2')
-
+                        progress.setValue(20)
                 ##add the processed layers
                 for new_file in glob.glob( path + "/" + "*.shp" ):        
                     my_process_path = new_file.replace('\\','/')
@@ -492,7 +510,7 @@ class PCA_Geomax_processing:
                     group_processed_survey.setExpanded(False) # set as false to remove the false true at the creation
                     group_processed_survey.setExpanded(True)
 
-
+                    progress.setValue(40)
                     for child in group_processed_survey.children():
                         if isinstance(child, QgsLayerTreeLayer):
                             if child.layer().isValid():
@@ -549,7 +567,7 @@ class PCA_Geomax_processing:
                                                     child.layer().renameAttribute(idx, 'Z')
                                                     child.layer().updateFields()
             print('step 3')
-
+            progress.setValue(100)
             ##ending time
             time1= datetime.now()
 
@@ -563,12 +581,13 @@ class PCA_Geomax_processing:
                         None,
                         'PCA Geomax Survey Processing',
                         '''The layers have been successfully added to the map in {} seconds.\n \n{} \n \nwere empty and have been discarded.'''.format(time, '\n'.join(map(str, empty_layers_list))))
+                iface.messageBar().clearWidgets()
             if len(empty_layers_list) == 0:
                 QMessageBox.about(
                         None,
                         'PCA Geomax Survey Processing',
                         '''The layers have been successfully added to the map in {} seconds.\n No empty layers have been discarded.'''.format(time))
-                   
+                iface.messageBar().clearWidgets()
 
 
                
