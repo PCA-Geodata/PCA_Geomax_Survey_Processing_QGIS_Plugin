@@ -24,9 +24,11 @@ repository=https://github.com/PCA-Geodata/PCA_Geomax_Survey_Processing_QGIS_Plug
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog= v 1.02 first released on 05/09/2022 on the PCA Repository 
-			 v 1.03 update dialogs and help styles
-			 v 1.04 added messageBar during layer uploading
+changelog= v 1.04 added messageBar during layer uploading
+		   v 1.03 update dialogs and help styles
+		   v 1.02 first released on 05/09/2022 on the PCA Repository 
+			
+
 
 # Tags are comma separated with spaces allowed
 tags=python PCA Geomax survey 

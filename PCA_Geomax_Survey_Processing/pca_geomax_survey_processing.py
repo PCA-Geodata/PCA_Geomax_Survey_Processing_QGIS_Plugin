@@ -37,8 +37,8 @@ from time import sleep
 from shutil import copy
 import webbrowser
 
-# from qgis.core import QgsLayerTreeGroup, QgsLayerTreeLayer
-# from qgis.utils import iface
+
+
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -97,6 +97,11 @@ class PCA_Geomax_processing:
             self.toolbar = iface.addToolBar( u'&PCA Geomax Survey Processing' )
             self.toolbar.setObjectName( u'&PCA Geomax Survey Processing' )
             self.toolbar.setToolTip("")
+            self.toolbar.setFixedWidth(240)
+            self.toolbar.setStyleSheet("QToolBar" "{"
+                                     "background-color: #ffebcc;"
+                                     "}")
+            
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
