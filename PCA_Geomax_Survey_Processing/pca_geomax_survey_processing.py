@@ -105,6 +105,9 @@ class PCA_Geomax_processing:
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
+        
+        self.dlgtool3.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry ) 
+        
         self.first_start = None
 
     # noinspection PyMethodMayBeStatic
@@ -938,20 +941,11 @@ class PCA_Geomax_processing:
                             'PCA Geomax Survey Processing',
                             '''The backup copy of the GeoGackage {} has been successfully created!'''.format(gpkg_name)) 
         
-        
+
     
     def get_DRS_table_layer(self):
-        layers_list = QgsProject.instance().mapLayers()
         
-        if len(layers_list)!= 0:                  
-            tables_list = []            
-            for lay in layers_list.values():
-                if lay.type() == QgsVectorLayer.VectorLayer:
-                    if lay.geometryType() == 4: #nogeometry tables
-                        tables_list.append(lay.name())
-    
-            self.dlgtool3.DRS_on_GIS_comboBox.clear()
-            self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
+        self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
         if len(layers_list)== 0:
             iface.messageBar().pushMessage(
                 "PCA Geomax Survey Processing", 
@@ -963,18 +957,17 @@ class PCA_Geomax_processing:
 
     def update_DRS_table(self):
         if self.first_start == True:
-            #self.first_start = False
-            
-            self.layers = {layer.name():layer for layer in QgsProject.instance().mapLayers().values() if layer.type()== 0}
-            self.get_DRS_table_layer()
+            #self.first_start = False 
         
-        # show the dialog
-        self.dlgtool3.show()
-        # Run the dialog event loop
-        result = self.dlgtool3.exec_()
-        # See if OK was pressed
+            # show the dialog
+            self.dlgtool3.show()
+            # Run the dialog event loop
+            result = self.dlgtool3.exec_()
+            # See if OK was pressed
         if result:
-            DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentText()
+            
+            DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentLayer() 
+            #DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentText()
             new_DRS_csv_file = self.dlgtool3.DRS_new_file_mQgsFileWidget.filePath()
            
             if len(DRS_Table_on_GIS) == 0:

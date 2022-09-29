@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
-    <height>319</height>
+    <width>496</width>
+    <height>231</height>
    </rect>
   </property>
   <property name="palette">
@@ -81,9 +81,6 @@
    <string>PCA Geomax Survey Processing Plugin</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <property name="sizeConstraint">
-    <enum>QLayout::SetFixedSize</enum>
-   </property>
    <item row="0" column="0" colspan="2">
     <widget class="QLabel" name="label">
      <property name="text">
@@ -102,11 +99,7 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QComboBox" name="DRS_on_GIS_comboBox">
-     <property name="focusPolicy">
-      <enum>Qt::WheelFocus</enum>
-     </property>
-    </widget>
+    <widget class="QgsMapLayerComboBox" name="DRS_on_GIS_comboBox"/>
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="label_3">
@@ -142,6 +135,11 @@
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
