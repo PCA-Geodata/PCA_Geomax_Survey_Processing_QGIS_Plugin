@@ -97,10 +97,10 @@ class PCA_Geomax_processing:
             self.toolbar = iface.addToolBar( u'&PCA Geomax Survey Processing' )
             self.toolbar.setObjectName( u'&PCA Geomax Survey Processing' )
             self.toolbar.setToolTip("")
-            self.toolbar.setFixedWidth(240)
-            self.toolbar.setStyleSheet("QToolBar" "{"
-                                     "background-color: #ffebcc;"
-                                     "}")
+            # self.toolbar.setFixedWidth(240)
+            # self.toolbar.setStyleSheet("QToolBar" "{"
+                                     # "background-color: #ffebcc;"
+                                     # "}")
             
 
         # Check if plugin was started the first time in current QGIS session
@@ -943,39 +943,41 @@ class PCA_Geomax_processing:
         
 
     
-    def get_DRS_table_layer(self):
+    # def get_DRS_table_layer(self):
         
-        self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
-        if len(layers_list)== 0:
-            iface.messageBar().pushMessage(
-                "PCA Geomax Survey Processing", 
-                "No tables available.",
-                level=Qgis.Warning, duration=0)  
-            return self.dontdonothing()
+        # self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
+        # if len(layers_list)== 0:
+            # iface.messageBar().pushMessage(
+                # "PCA Geomax Survey Processing", 
+                # "No tables available.",
+                # level=Qgis.Warning, duration=0)  
+            # return self.dontdonothing()
             
 
 
     def update_DRS_table(self):
         if self.first_start == True:
-            #self.first_start = False 
+           self.first_start = False
         
             # show the dialog
-            self.dlgtool3.show()
-            # Run the dialog event loop
-            result = self.dlgtool3.exec_()
-            # See if OK was pressed
+        self.dlgtool3.show()
+        # Run the dialog event loop
+        result = self.dlgtool3.exec_()
+        # See if OK was pressed
         if result:
             
             DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentLayer() 
             #DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentText()
             new_DRS_csv_file = self.dlgtool3.DRS_new_file_mQgsFileWidget.filePath()
            
+            
+            
             if len(DRS_Table_on_GIS) == 0:
                 QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
                 return self.dontdonothing()
              
             else:
-                self.shpLayer = self.layers[self.dlgtool3.DRS_on_GIS_comboBox.currentText()]
+                # self.shpLayer = self.layers[self.dlgtool3.DRS_on_GIS_comboBox.currentText()]
                 
                 ###add the new version of the DRS CSV
                 CSV_file_path = new_DRS_csv_file.replace('\\','/')
@@ -985,7 +987,7 @@ class PCA_Geomax_processing:
                 vlayer = QgsVectorLayer(uri, "Temp_CSV", "delimitedtext")
                 QgsProject.instance().addMapLayer(vlayer)
                 
-                CSV_table = QgsProject.instance().mapLayersByName(DRS_Table_on_GIS)[0]
+                CSV_table = QgsProject.instance().mapLayersByName(DRS_Table_on_GIS.name())[0]
        
                 external_DRS_CSV = QgsProject.instance().mapLayersByName('Temp_CSV')[0]
 
