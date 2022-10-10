@@ -277,16 +277,7 @@ class PCA_Geomax_processing:
         result = self.dlgtool1.exec_()
         # See if OK was pressed
         if result:
-                 
-        
-        
-            #add the action here
-            
-            ##starting time
-            time0= datetime.now()
-            
             root = QgsProject.instance().layerTreeRoot()
-
 
             ##select a folder in explorer
             folder = str(QFileDialog.getExistingDirectory(None, "Select Directory"))
@@ -446,7 +437,6 @@ class PCA_Geomax_processing:
                 if not root.findGroup(group_name):
                             root.insertGroup(0, group_name) 
                             
-
                 #Create progress bar
                 progressMessageBar = iface.messageBar().createMessage("PCA Geomax Survey Processing Plugin: Preparation and uploading of the layers in progress...")
                 progress = QProgressBar()
@@ -455,13 +445,10 @@ class PCA_Geomax_processing:
                 progressMessageBar.layout().addWidget(progress)
                 iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
                 
-                
-                
                 progress.setValue(0)
 
-
-
-
+                ##starting calculating processing time
+                time0= datetime.now()
 
 
                 empty_layers_list = []
@@ -487,13 +474,11 @@ class PCA_Geomax_processing:
                         crs = new_layer.crs()
                         crs.createFromId(27700)  # Whatever CRS you want
                         new_layer.setCrs(crs)
-                        # thenewepsg = new_layer.crs()
-
+              
                         writer = QgsVectorFileWriter.writeAsVectorFormat(new_layer,new_path,'utf-8', new_layer.crs(), driverName='ESRI Shapefile')
 
                         processed_layer = QgsVectorLayer(path, filename + '_processed.shp', "ogr")
-                        # newepsg = processed_layer.crs()
-                        print ('step 2')
+
                         progress.setValue(20)
                 ##add the processed layers
                 for new_file in glob.glob( path + "/" + "*.shp" ):        
@@ -523,42 +508,6 @@ class PCA_Geomax_processing:
                         if isinstance(child, QgsLayerTreeLayer):
                             if child.layer().isValid():
                                 if child.layer().type() == QgsMapLayer.VectorLayer:
-         
-                    #                if child.layer().geometryType() == 2: #polygons
-                    #                    with edit(child.layer()):
-                    #                       for i in child.layer().fields().names():
-                    #                            if(i == 'LN_ID'):
-                    #                                my_field1 = child.layer().fields().indexFromName('LN_ID')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field1])
-                    #                                child.layer().updateFields()
-                    #                            if(i == 'LN_CODE'):
-                    #                                my_field2 = child.layer().fields().indexFromName('LN_CODE')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field2])
-                    #                                child.layer().updateFields()
-                    #                            if(i == 'LN_PHOTO'):
-                    #                                my_field3 = child.layer().fields().indexFromName('LN_PHOTO')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field3])
-                    #                                child.layer().updateFields()
-                                   
-                                                       
-                    #                if child.layer().geometryType() == 1: #LINES
-                    #                    with edit(child.layer()):
-                    #                       for i in child.layer().fields().names():
-                    #                            if(i == 'LN_ID'):
-                    #                                my_field4 = child.layer().fields().indexFromName('LN_ID')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field4])
-                    #                                child.layer().updateFields()
-                    #                            if(i == 'LN_CODE'):
-                    #                                my_field5 = child.layer().fields().indexFromName('LN_CODE')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field5])
-                    #                                child.layer().updateFields()
-                    #                            if(i == 'LN_PHOTO'):
-                    #                                my_field6 = child.layer().fields().indexFromName('LN_PHOTO')
-                    #                                child.layer().dataProvider().deleteAttributes([my_field6])
-                    #                                child.layer().updateFields()
-
-
-
                                     if child.layer().geometryType() == 0: #POINTS
                                         with edit(child.layer()):
                                             for field in child.layer().fields().names():
@@ -574,7 +523,7 @@ class PCA_Geomax_processing:
                                                     idx = child.layer().fields().indexFromName('PT_HEIGHT')
                                                     child.layer().renameAttribute(idx, 'Z')
                                                     child.layer().updateFields()
-            print('step 3')
+       
             progress.setValue(100)
             ##ending time
             time1= datetime.now()
@@ -597,16 +546,13 @@ class PCA_Geomax_processing:
                         '''The layers have been successfully added to the map in {} seconds.\n No empty layers have been discarded.'''.format(time))
                 iface.messageBar().clearWidgets()
 
-
-               
             empty_layers_list.clear()   
                     
          
     def copy_and_paste_to_GIS(self):
         if self.first_start == True:
             self.first_start = False
-            
-            
+
             
         # show the dialog
         self.dlgtool2.show()
@@ -615,10 +561,7 @@ class PCA_Geomax_processing:
         # See if OK was pressed
         if result:
             #add the action here
-        
-            
-            
-            
+
             ### Copy and paste all the data from the survey processing layer to the corresponding GIS template. ###
             ### After copying, the survey layer is removed from the TOC                                         ###
             
@@ -648,7 +591,6 @@ class PCA_Geomax_processing:
                             copied_layers_list.append(survey_layer_name)
             else:
                 pass 
-
 
             #Section lines
             survey_layer_name = 'Lines_SECTION_LN_processed'
