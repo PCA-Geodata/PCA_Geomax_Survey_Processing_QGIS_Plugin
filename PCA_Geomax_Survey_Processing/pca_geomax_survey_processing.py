@@ -46,10 +46,10 @@ from .resources import *
 
 from .pca_geomax_update_DRS_dialog import PcaGeomaxUpdateDRSTableDialog
 from .pca_geomax_backup_geopackage_dialog import PcaGeomaxBackupGeopackageDialog
-
 from .pca_geomax_import_processed_shp_dialog import PCA_Geomax_Import_Processed_SHP_Dialog
-
 from .pca_geomax_copy_shp_to_gis_layers_dialog import PCA_Geomax_copy_shp_to_GIS_layers_processingDialog
+from .pca_geomax_update_DRS_context_dialog import PcaGeomaxUpdateDRS_Context_Dialog
+from .pca_geomax_update_DRS_trench_sheet_dialog import PcaGeomaxUpdateDRS_Trench_sheet_Dialog
 
 
 class PCA_Geomax_processing:
@@ -89,7 +89,8 @@ class PCA_Geomax_processing:
         self.dlgtool2 = PCA_Geomax_copy_shp_to_GIS_layers_processingDialog()
         self.dlgtool3 = PcaGeomaxUpdateDRSTableDialog()
         self.dlgtool4 = PcaGeomaxBackupGeopackageDialog()
-        
+        self.dlgtool5 = PcaGeomaxUpdateDRS_Context_Dialog()
+        self.dlgtool6 = PcaGeomaxUpdateDRS_Trench_sheet_Dialog()
         
         
         self.toolbar = iface.mainWindow().findChild( QToolBar, u'&PCA Geomax Survey Processing' )
@@ -106,7 +107,10 @@ class PCA_Geomax_processing:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         
-        self.dlgtool3.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry ) 
+        
+        self.dlgtool5.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry)
+        self.dlgtool6.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry)
+        
         
         self.first_start = None
 
@@ -203,7 +207,7 @@ class PCA_Geomax_processing:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         
-        self.layergeneratoricon= self.add_action( 
+        self.pcalogo= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/pca_logo_icon.png',
             text=self.tr(u''),
             #callback=self.dontdonothing,
@@ -213,7 +217,7 @@ class PCA_Geomax_processing:
         self.first_start = True
         
         
-        self.layergeneratoricon= self.add_action( 
+        self.processloadshapefiles= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/geomax_processing_import_icon.png',
             text=self.tr(u'Process and import raw survey shapefiles'),
             callback=self.process_and_load_layers,
@@ -221,7 +225,7 @@ class PCA_Geomax_processing:
         # will be set False in run()
         self.first_start = True
         
-        self.layergeneratoricon= self.add_action( 
+        self.copypastetogis= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/geomax_processing_copy_paste_icon.png',
             text=self.tr(u'Copy the survey data to the GIS layers'),
             callback=self.copy_and_paste_to_GIS,
@@ -229,15 +233,15 @@ class PCA_Geomax_processing:
         # will be set False in run()
         self.first_start = True
         
-        self.layergeneratoricon= self.add_action( 
+        self.chooseDRSupdater= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/geomax_update_DRS_icon.png',
-            text=self.tr(u'Update the DRS_Table from a external CSV file'),
-            callback=self.update_DRS_table,
+            text=self.tr(u'Update the DRS spreadsheets from a external CSV file'),
+            callback=self.choose_DRS_update_type,
             parent=self.iface.mainWindow())
         # will be set False in run()
         self.first_start = True
         
-        self.layergeneratoricon= self.add_action( 
+        self.backup= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/geomax_backup_gpkg_icon.png',
             text=self.tr(u'Create a backup copy of the active GeoPackage'),
             callback=self.gpkg_backup,
@@ -245,7 +249,7 @@ class PCA_Geomax_processing:
         # will be set False in run()
         self.first_start = True
         
-        self.layergeneratoricon= self.add_action( 
+        self.help_show= self.add_action( 
             icon_path = ':/plugins/pca_geomax_survey_processing/icons/geomax_help_icon.png',
             text=self.tr(u'Open the help'),
             callback=self.help_show,
@@ -255,7 +259,6 @@ class PCA_Geomax_processing:
   
         # will be set False in run()
         self.first_start = True
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -268,8 +271,6 @@ class PCA_Geomax_processing:
     def process_and_load_layers(self):
         if self.first_start == True:
             self.first_start = False
-            
-            
             
         # show the dialog
         self.dlgtool1.show()
@@ -547,8 +548,7 @@ class PCA_Geomax_processing:
                 iface.messageBar().clearWidgets()
 
             empty_layers_list.clear()   
-                    
-         
+                            
     def copy_and_paste_to_GIS(self):
         if self.first_start == True:
             self.first_start = False
@@ -837,7 +837,6 @@ class PCA_Geomax_processing:
             
             copied_layers_list.clear()           
                
-
     def gpkg_backup(self):
         
         if self.first_start == True:
@@ -882,44 +881,43 @@ class PCA_Geomax_processing:
                             None,
                             'PCA Geomax Survey Processing',
                             '''The backup copy of the GeoGackage {} has been successfully created!'''.format(gpkg_name)) 
-        
-
     
-    # def get_DRS_table_layer(self):
-        
-        # self.dlgtool3.DRS_on_GIS_comboBox.addItems(tables_list)
-        # if len(layers_list)== 0:
-            # iface.messageBar().pushMessage(
-                # "PCA Geomax Survey Processing", 
-                # "No tables available.",
-                # level=Qgis.Warning, duration=0)  
-            # return self.dontdonothing()
-            
-
-
-    def update_DRS_table(self):
-        if self.first_start == True:
-           self.first_start = False
-        
+    def choose_DRS_update_type(self):
+        # if self.first_start == True:
+           # self.first_start = False
+        self.dlgtool3.DRS_context_dialog_pushButton.clicked.connect(self.update_DRS_Context_table)
+        self.dlgtool3.DRS_Trench_sheet_dialog_pushButton.clicked.connect(self.update_DRS_Trench_sheet_table)
             # show the dialog
         self.dlgtool3.show()
+
+    def update_DRS_Context_table(self):
+        # if self.first_start == True:
+           # self.first_start = False
+
+        if len(QgsProject.instance().mapLayersByName('DRS_Table')) == 0:
+            return self.dontdonothing
+        else: 
+            DRS_context = QgsProject.instance().mapLayersByName("DRS_Table")[0]
+        
+        
+        
+            self.dlgtool5.DRS_on_GIS_comboBox.setLayer(DRS_context)
+        
+        # show the dialog
+        self.dlgtool5.show()
         # Run the dialog event loop
-        result = self.dlgtool3.exec_()
+        result = self.dlgtool5.exec_()
         # See if OK was pressed
         if result:
-            
-            DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentLayer() 
-            #DRS_Table_on_GIS = self.dlgtool3.DRS_on_GIS_comboBox.currentText()
-            new_DRS_csv_file = self.dlgtool3.DRS_new_file_mQgsFileWidget.filePath()
-           
-            
-            
+        
+            DRS_Table_on_GIS = self.dlgtool5.DRS_on_GIS_comboBox.currentLayer() 
+            new_DRS_csv_file = self.dlgtool5.DRS_new_file_mQgsFileWidget.filePath()
+                 
             if len(DRS_Table_on_GIS) == 0:
                 QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
                 return self.dontdonothing()
              
             else:
-                # self.shpLayer = self.layers[self.dlgtool3.DRS_on_GIS_comboBox.currentText()]
                 
                 ###add the new version of the DRS CSV
                 CSV_file_path = new_DRS_csv_file.replace('\\','/')
@@ -936,10 +934,33 @@ class PCA_Geomax_processing:
                 if external_DRS_CSV.isValid() and CSV_table.isValid():
                         if external_DRS_CSV.type() == QgsMapLayer.VectorLayer and \
                         CSV_table.type() == QgsMapLayer.VectorLayer:
-                           
+                            QgsProject.instance().addMapLayer(vlayer)
+                            
+                            context_list = []
+                            for f in external_DRS_CSV.getFeatures():
+                                context_list.append(f['Context'])
+                                
+                            print (context_list)
+                            
+                            
+                            matching_features_ids = []
+                            for n in context_list:
+                                for f in CSV_table.getFeatures():
+                                    if str(n) == f['Context']:
+                                        matching_features_ids.append(f.id())
+
+                            # print (matching_features_ids)
+
+                            # CSV_table.selectByIds(matching_features_ids)
+
+                            # for l in CSV_table.selectedFeatures():
+                                # print (l['Context'])
+                                    
+                          
                             with edit(CSV_table):
-                                for feature in CSV_table.getFeatures():
-                                    CSV_table.deleteFeature(feature.id())
+                                
+                                for d in matching_features_ids:
+                                    CSV_table.deleteFeature(d)
                             
                             iface.setActiveLayer( external_DRS_CSV ) 
                             external_DRS_CSV.selectAll()
@@ -951,11 +972,97 @@ class PCA_Geomax_processing:
                             external_DRS_CSV.removeSelection()
                             CSV_table.removeSelection()
                             QgsProject.instance().removeMapLayer(external_DRS_CSV.id())                   
-                
+                            
                             QMessageBox.about(
                             None,
                             'PCA Geomax Survey Processing',
-                            '''The GIS DRS_Table has been successfully updated!''') 
+                            '''The GIS DRS Context spreadsheet (DRS_Table) has been successfully updated!''') 
+                            
+    def update_DRS_Trench_sheet_table(self):
+        # if self.first_start == True:
+           # self.first_start = False
+        if len(QgsProject.instance().mapLayersByName('DRS_Table')) == 0:
+            return self.dontdonothing
+        else: 
+            DRS_trench_sheet = QgsProject.instance().mapLayersByName("DRS_Trench_sheet")[0]
+        
+        
+        
+            self.dlgtool6.DRS_on_GIS_comboBox.setLayer(DRS_trench_sheet)
+        # show the dialog
+        self.dlgtool6.show()
+        # Run the dialog event loop
+        result = self.dlgtool6.exec_()
+        # See if OK was pressed
+        if result:
+        
+            DRS_Table_on_GIS = self.dlgtool6.DRS_on_GIS_comboBox.currentLayer() 
+            new_DRS_csv_file = self.dlgtool6.DRS_new_file_mQgsFileWidget.filePath()
+                 
+            if len(DRS_Table_on_GIS) == 0:
+                QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
+                return self.dontdonothing()
+             
+            else:
+                
+                ###add the new version of the DRS CSV
+                CSV_file_path = new_DRS_csv_file.replace('\\','/')
+               
+                uri = "file:///"+ CSV_file_path + "?delimiter=,"
+                
+                vlayer = QgsVectorLayer(uri, "Temp_CSV", "delimitedtext")
+                QgsProject.instance().addMapLayer(vlayer)
+                
+                CSV_table = QgsProject.instance().mapLayersByName(DRS_Table_on_GIS.name())[0]
+       
+                external_DRS_CSV = QgsProject.instance().mapLayersByName('Temp_CSV')[0]
+
+                if external_DRS_CSV.isValid() and CSV_table.isValid():
+                        if external_DRS_CSV.type() == QgsMapLayer.VectorLayer and \
+                        CSV_table.type() == QgsMapLayer.VectorLayer:
+                            QgsProject.instance().addMapLayer(vlayer)
+                            
+                            trench_list = []
+                            for f in external_DRS_CSV.getFeatures():
+                                trench_list.append(f['Trench Number'])
+                                
+                            
+                            
+                            
+                            matching_features_ids = []
+                            for n in trench_list:
+                                for f in CSV_table.getFeatures():
+                                    if str(n) == f['Trench Number']:
+                                        matching_features_ids.append(f.id())
+
+                            # print (matching_features_ids)
+
+                            # CSV_table.selectByIds(matching_features_ids)
+
+                            # for l in CSV_table.selectedFeatures():
+                                # print (l['Trench Number'])
+                                    
+                          
+                            with edit(CSV_table):
+                                
+                                for d in matching_features_ids:
+                                    CSV_table.deleteFeature(d)
+                            
+                            iface.setActiveLayer( external_DRS_CSV ) 
+                            external_DRS_CSV.selectAll()
+                            iface.actionCopyFeatures().trigger()
+                            iface.setActiveLayer(CSV_table)
+                            CSV_table.startEditing()
+                            iface.actionPasteFeatures().trigger()
+                            CSV_table.commitChanges()
+                            external_DRS_CSV.removeSelection()
+                            CSV_table.removeSelection()
+                            QgsProject.instance().removeMapLayer(external_DRS_CSV.id())                   
+                            
+                            QMessageBox.about(
+                            None,
+                            'PCA Geomax Survey Processing',
+                            '''The GIS DRS Trench Sheet spreadsheet (DRS_Trench_sheet) has been successfully updated!''') 
 
     def help_show(self):
        
@@ -963,7 +1070,6 @@ class PCA_Geomax_processing:
         help_path = os.path.join(self.plugin_dir,'help','help.html')
         webbrowser.open(help_path)
                     
-
     def dontdonothing(self):
         pass
     
