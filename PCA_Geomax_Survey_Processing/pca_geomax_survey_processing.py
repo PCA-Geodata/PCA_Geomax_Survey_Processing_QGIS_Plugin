@@ -912,8 +912,8 @@ class PCA_Geomax_processing:
         
             DRS_Table_on_GIS = self.dlgtool5.DRS_on_GIS_comboBox.currentLayer() 
             new_DRS_csv_file = self.dlgtool5.DRS_new_file_mQgsFileWidget.filePath()
-                 
-            if len(DRS_Table_on_GIS) == 0:
+            
+            if len(DRS_Table_on_GIS.name()) == 0:
                 QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
                 return self.dontdonothing()
              
@@ -981,7 +981,7 @@ class PCA_Geomax_processing:
     def update_DRS_Trench_sheet_table(self):
         # if self.first_start == True:
            # self.first_start = False
-        if len(QgsProject.instance().mapLayersByName('DRS_Table')) == 0:
+        if len(QgsProject.instance().mapLayersByName('DRS_Trench_sheet')) == 0:
             return self.dontdonothing
         else: 
             DRS_trench_sheet = QgsProject.instance().mapLayersByName("DRS_Trench_sheet")[0]
@@ -999,7 +999,7 @@ class PCA_Geomax_processing:
             DRS_Table_on_GIS = self.dlgtool6.DRS_on_GIS_comboBox.currentLayer() 
             new_DRS_csv_file = self.dlgtool6.DRS_new_file_mQgsFileWidget.filePath()
                  
-            if len(DRS_Table_on_GIS) == 0:
+            if len(DRS_Table_on_GIS.name()) == 0:
                 QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
                 return self.dontdonothing()
              
@@ -1024,7 +1024,7 @@ class PCA_Geomax_processing:
                             
                             trench_list = []
                             for f in external_DRS_CSV.getFeatures():
-                                trench_list.append(f['Trench Number'])
+                                trench_list.append(f['Trench_Number'])
                                 
                             
                             
@@ -1032,7 +1032,7 @@ class PCA_Geomax_processing:
                             matching_features_ids = []
                             for n in trench_list:
                                 for f in CSV_table.getFeatures():
-                                    if str(n) == f['Trench Number']:
+                                    if str(n) == f['Trench_Number']:
                                         matching_features_ids.append(f.id())
 
                             # print (matching_features_ids)
