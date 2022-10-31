@@ -6,7 +6,7 @@
 name=PCA Geomax Survey Processing
 qgisMinimumVersion=3.0
 description=PCA Geomax Survey Processing is an internal QGIS Plugin specifically built for PCA survey data management and processing purposes.
-version=1.2
+version=1.21
 author=Valerio Pinna
 email=pinnavalerio@yahoo.co.uk
 
@@ -24,7 +24,8 @@ repository=https://github.com/PCA-Geodata/PCA_Geomax_Survey_Processing_QGIS_Plug
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog= v 1.2 new DRS spreadsheet updater:  
+changelog= v 1.21 help updated with new spreadsheet updater: 
+		   v 1.2 new DRS spreadsheet updater:  
 				separation between DRS context and DRS trenches;
 				issue with multiarea and multiDRS sites solved.
 		   v 1.04 added messageBar during layer uploading
