@@ -520,8 +520,13 @@ class PCA_Geomax_processing:
                                                     idx = child.layer().fields().indexFromName('PT_Y-NORTH')
                                                     child.layer().renameAttribute(idx, 'Y')
                                                     child.layer().updateFields()
-                                                if field == 'PT_X-EAST':
+                                                if field == 'PT_HEIGHT':
                                                     idx = child.layer().fields().indexFromName('PT_HEIGHT')
+                                                    child.layer().renameAttribute(idx, 'Z')
+                                                    child.layer().updateFields()
+                                                    
+                                                if field == 'PT_ELEV':
+                                                    idx = child.layer().fields().indexFromName('PT_ELEV')
                                                     child.layer().renameAttribute(idx, 'Z')
                                                     child.layer().updateFields()
        
