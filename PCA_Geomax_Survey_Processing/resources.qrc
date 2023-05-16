@@ -6,6 +6,5 @@
 		<file>icons/pca_logo_icon.png</file>
 		<file>icons/geomax_update_DRS_icon.png</file>
 		<file>icons/geomax_help_icon.png</file>
-		<file>icons/geomax_help_icon_v2.png</file>
     </qresource>
 </RCC>

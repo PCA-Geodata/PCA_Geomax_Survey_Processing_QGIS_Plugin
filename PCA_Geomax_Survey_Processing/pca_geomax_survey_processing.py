@@ -24,9 +24,12 @@
 import os
 import glob
 import os.path
+import zipfile
+import webbrowser
+from osgeo import ogr
 from qgis.utils import *
 from datetime import date, datetime
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction,QMessageBox, QToolBar, QProgressBar
 from PyQt5.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
@@ -35,10 +38,6 @@ from PyQt5.QtCore import Qt
 from qgis.core import *
 from time import sleep
 from shutil import copy
-import webbrowser
-
-
-
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -83,7 +82,6 @@ class PCA_Geomax_processing:
         self.actions = []
         self.menu = self.tr(u'&PCA Geomax Survey Processing')
         
-
         #Declare dialogues
         self.dlgtool1 = PCA_Geomax_Import_Processed_SHP_Dialog()
         self.dlgtool2 = PCA_Geomax_copy_shp_to_GIS_layers_processingDialog()
@@ -92,22 +90,16 @@ class PCA_Geomax_processing:
         self.dlgtool5 = PcaGeomaxUpdateDRS_Context_Dialog()
         self.dlgtool6 = PcaGeomaxUpdateDRS_Trench_sheet_Dialog()
         
-        
         self.toolbar = iface.mainWindow().findChild( QToolBar, u'&PCA Geomax Survey Processing' )
         if not self.toolbar:
             self.toolbar = iface.addToolBar( u'&PCA Geomax Survey Processing' )
             self.toolbar.setObjectName( u'&PCA Geomax Survey Processing' )
             self.toolbar.setToolTip("")
-            # self.toolbar.setFixedWidth(240)
-            # self.toolbar.setStyleSheet("QToolBar" "{"
-                                     # "background-color: #ffebcc;"
-                                     # "}")
-            
 
+            
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
-        
-        
+
         self.dlgtool5.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry)
         self.dlgtool6.DRS_on_GIS_comboBox.setFilters(QgsMapLayerProxyModel.NoGeometry)
         
@@ -280,48 +272,60 @@ class PCA_Geomax_processing:
         if result:
             root = QgsProject.instance().layerTreeRoot()
 
-            ##select a folder in explorer
-            folder = str(QFileDialog.getExistingDirectory(None, "Select Directory"))
-            if len(folder) == 0:
+            ##select a zip file in explorer
+            raw_zip_file, _ = QFileDialog.getOpenFileName(None, "Select a Zip file containing the raw Geomax shapefiles", filter="Zip Files (*.zip)")
+            
+            if len(raw_zip_file) == 0:
                 return self.dontdonothing()
             else:
-                pass
-            empty_folder_check = []
-            for file in glob.glob( folder + "/" + "*.shp" ):
-                empty_folder_check.append(file)
-            
-            if len(empty_folder_check) == 0:
+                zf = zipfile.ZipFile(raw_zip_file)
+                zip_file_name = zf.filename
+                folder = str(raw_zip_file)
+
+            empty_zip_check = []
+            for file in zf.namelist():
+                if file.endswith(".shp"): 
+                    empty_zip_check.append(file)
+                    
+            if len(empty_zip_check) == 0:
                 QMessageBox.about(
                         None,
                         'PCA Geomax Survey Processing',
-                        '''The selected folder doesn't contain any shapefile. Please select a valid folder and retry.''')
+                        '''The selected zip file doesn't contain any shapefile. Please select a valid zip file and retry.''')
                 return self.dontdonothing() 
-            if len(empty_folder_check) != 0:
+            if len(empty_zip_check) != 0:                             
+                #retrieving the name of the zip file for the name of the group
+                zip_file_name_no_ext = os.path.basename(zip_file_name).replace('.zip','')
+                job_name = zip_file_name_no_ext.replace('_SHP','')
+                group_name = 'survey_data_temp_'+job_name
+                # create an empty list to store group names
+                groups = []
+
+                # iterate through the child nodes of the root node
+                for child in root.children():
+                    # check if the child node is a group
+                    if isinstance(child, QgsLayerTreeGroup):
+                        # append the group name to the list
+                        groups.append(child.name())
                 
+                old_group_name = group_name
+                group_occurences = []
+                for group in [group_name, group_name+'_1', group_name+'_2', group_name+'_3', group_name+'_4', group_name+'_5', group_name+'_6', group_name+'_7']:
+                   if group in groups:
+                        group_occurences.append(group) 
+
+                if len(group_occurences) != 0:
+                    old_group_name = group_name+'_'+str(len(group_occurences)-1)
+                    last_two_chars = old_group_name[-2:]
+                    if last_two_chars == '_0':
+                        old_group_name = old_group_name[:-2]
+                    group_name = group_name+'_'+str(len(group_occurences))
                                 
-                ###create new group with the date when the survey files were saved
-                #retrieve first file in the folder
-                file = os.listdir(folder)[0]
-                file_address = (folder+'\\'+file)
-
-                m_time = os.path.getmtime(file_address)
-                # convert timestamp into DateTime object
-                dt_m = datetime.fromtimestamp(m_time)
-                dt_mWithoutTime = dt_m.strftime('%Y-%m-%d')
-                survey_export_date = (str(dt_mWithoutTime).replace('-',''))
-
-                group_name = 'survey_data_temp_'+survey_export_date
-
-                if not root.findGroup(group_name):
-                            root.insertGroup(0, group_name)  
-                else:
-                    pass
-
-
+                                
+                print (old_group_name)
+                print (group_name)
                 #create a new folder
-                ##set path to main survey_daily_processing_folder
-                #create a new folder
-                ##set path to main survey_daily_processing_folder
+                #set path to main survey_daily_processing_folder
                 last_folder = os.path.basename(folder)
                 interm_path = folder.replace(last_folder,'')[:-1]
                 second_last_folder = os.path.basename(interm_path)
@@ -329,14 +333,12 @@ class PCA_Geomax_processing:
                 third_last_folder = os.path.basename(second_interm_path)
                 new_processed_path = second_interm_path.replace(third_last_folder,'')
 
-                ### new folder name
-                directory = "Processed_shapefiles"
-                ###new path
-                global path
+                
+                directory = "processed_shapefiles_123" # new folder name
+                global path  #new path
                 path = os.path.join(new_processed_path,directory)
 
                 if os.path.exists(path):
-                    
                     ###delete files and folder###
                     reply = QMessageBox.warning(None,  'PCA Geomax Survey Processing Plugin',
                                                 'The folder and the files already exist! \nDo you want to overwrite it? All your previous edits on the processed layers will be lost. \n \nTo overwrite, select YES and delete the folder "Processed_shapefiles" from the \
@@ -349,32 +351,37 @@ class PCA_Geomax_processing:
                         
                         root = QgsProject.instance().layerTreeRoot()
                         RemoveLayers = []
-                        group_survey = root.findGroup(group_name)
+                        group_survey = root.findGroup(old_group_name)
 
 
-                        for child in group_survey.children():
-                            if isinstance(child, QgsLayerTreeLayer):
-                                if child.layer().isValid():
-                                    if child.layer().type() == QgsMapLayer.VectorLayer:
-                                        RemoveLayers.append(child.layer().id())
+                        print (group_survey)
+                        if group_survey is not None:
+                         
+                            
+                            for child in group_survey.children():
+                                if isinstance(child, QgsLayerTreeLayer):
+                                    if child.layer().isValid():
+                                        if child.layer().type() == QgsMapLayer.VectorLayer:
+                                            RemoveLayers.append(child.layer().id())
 
-                        if len(RemoveLayers) > 0:
-                            QgsProject.instance().removeMapLayers( RemoveLayers )
-                            iface.mapCanvas().refresh()
-                        RemoveLayers.clear()
-                        root.removeChildNode(group_survey)
+                            if len(RemoveLayers) > 0:
+                                QgsProject.instance().removeMapLayers( RemoveLayers )
+                                iface.mapCanvas().refresh()
+                            RemoveLayers.clear()
+                            root.removeChildNode(group_survey)
                    
-                        # ##method open the folder and delete manually
-                        path = os.path.realpath(new_processed_path)
+                        ## method open the folder and delete manually ##
+                        #path = os.path.realpath(new_processed_path)
            
-                        os.startfile(path)
-                        iface.messageBar().pushMessage('PCA Geomax Survey Processing Plugin:', 'Manually delete the folder "Processed_shapefiles" and re-run the plugin', level=Qgis.Info)   
+                        # os.startfile(path)
+                        # iface.messageBar().pushMessage('PCA Geomax Survey Processing Plugin:', 'Manually delete the folder "Processed_shapefiles" and re-run the plugin', level=Qgis.Info)   
                         
-                        return self.dontdonothing()
+                        # return self.dontdonothing()
                         
                         
-                        ### START - Attempt to remove automaticcaly the files and the folder###
-                        # #old working version with access problem
+                        ### START - Attempt to remove automatically the files and the folder###
+                       
+                        # # #old working version with access problem
                         # for file in glob.glob( path + "/" + "*.*" ):
                             # fd = os.open(file, os.O_WRONLY)
                             
@@ -386,26 +393,26 @@ class PCA_Geomax_processing:
                         # #new try to solve access problem -WinError32-
                        
          
-                        # # for file in glob.glob( path + "/" + "*.shp" ):
+                        for file in glob.glob( path + "/" + "*.shp" ):
 
-                            # # shapelayer = QgsVectorLayer(file,"to_be_removed")
+                            shapelayer = QgsVectorLayer(file,"to_be_removed")
                             
                             
-                            # # QgsProject.instance().addMapLayer(shapelayer)
+                            QgsProject.instance().addMapLayer(shapelayer)
                             
-                            # # #shapelayertoremove = QgsProject.instance().mapLayersByName('to_be_removed')[0]
-                            # # QgsProject.instance().removeMapLayer(shapelayer.id())
+                            #shapelayertoremove = QgsProject.instance().mapLayersByName('to_be_removed')[0]
+                            QgsProject.instance().removeMapLayer(shapelayer.id())
                             
-                            # # shapelayer = None
-                            # # _deleteoldshp = QgsVectorFileWriter.deleteShapeFile(file)
+                            shapelayer = None
+                            _deleteoldshp = QgsVectorFileWriter.deleteShapeFile(file)
                             
-                            # # iface.mapCanvas().refresh()
-                            # # # files_to_remove_list.append(file)
-                            # # # fd = os.open(file, os.O_WRONLY)
-                            # # if _deleteoldshp == True:
-                                # # print (file, ' deleted correctly')
-                            # # if _deleteoldshp == False:
-                                # # print (file, ' not deteleted')
+                            iface.mapCanvas().refresh()
+                            # files_to_remove_list.append(file)
+                            # fd = os.open(file, os.O_WRONLY)
+                            if _deleteoldshp == True:
+                                print (file, ' deleted correctly')
+                            if _deleteoldshp == False:
+                                print (file, ' not deleted')
                         
                         # ###TEST version 2
                         # files_to_remove_list = []
@@ -432,11 +439,13 @@ class PCA_Geomax_processing:
                         # '''The folder \n \n{} \n \nwas successfully deleted.'''.format(path))
                         
                         ### END - Attempt to remove automatically the files and the folder###
-                    
+                #create new processed_shapefiles folder
                 if not os.path.exists(path):
                     os.makedirs(path)
+                #create the temporary processd shapefile group
                 if not root.findGroup(group_name):
-                            root.insertGroup(0, group_name) 
+                    root.insertGroup(0, group_name)
+
                             
                 #Create progress bar
                 progressMessageBar = iface.messageBar().createMessage("PCA Geomax Survey Processing Plugin: Preparation and uploading of the layers in progress...")
@@ -451,89 +460,145 @@ class PCA_Geomax_processing:
                 ##starting calculating processing time
                 time0= datetime.now()
 
-
                 empty_layers_list = []
-                ##working with any shapefile in the folder
-                for file in glob.glob( folder + "/" + "*.shp" ):
-                    filename_ext = file.replace(folder+'\\','')
-                    filename = filename_ext.replace('.shp','')
-                   
-                    raw_layer = QgsVectorLayer(file, filename, "ogr")
+                
+                #working with any shapefile in the raw zip file
+                zipbase = '/vsizip/'+raw_zip_file 
+                shapefiles = [layer.GetName() for layer in ogr.Open(zipbase)]
+
+                layers = []
+                for shp_name in shapefiles:
+                    shp_path = f"{zipbase}/{shp_name}.shp"
+                    raw_layer = QgsVectorLayer(shp_path, shp_name, "ogr")
                     
                     ###ignore empty layers
-                    
                     index = len([feature for feature in raw_layer.getFeatures()])
                     if index == 0:
-                        empty_layers_list.append(filename)
-                        
-                    if index != 0:
-                        new_path = path+ '\\'+ filename + '_processed.shp'
-                        new_path_formatted = new_path.replace('\\','/')
-                        new_layer = QgsVectorLayer(file, filename, "ogr")
-
+                        empty_layers_list.append(shp_name)
                     
+                    if index != 0:
+                        new_path = path+ '\\'+ shp_name + '_processed.shp'
+                        new_path_formatted = new_path.replace('\\','/')
+                        new_layer = QgsVectorLayer(shp_path, shp_name, "ogr")
+
                         crs = new_layer.crs()
                         crs.createFromId(27700)  # Whatever CRS you want
                         new_layer.setCrs(crs)
               
                         writer = QgsVectorFileWriter.writeAsVectorFormat(new_layer,new_path,'utf-8', new_layer.crs(), driverName='ESRI Shapefile')
 
-                        processed_layer = QgsVectorLayer(path, filename + '_processed.shp', "ogr")
+                        processed_layer = QgsVectorLayer(path, shp_name + '_processed.shp', "ogr")
 
                         progress.setValue(20)
+                            
                 ##add the processed layers
                 for new_file in glob.glob( path + "/" + "*.shp" ):        
                     my_process_path = new_file.replace('\\','/')
 
                     new_file_ext = new_file.replace(path+'\\','')
-                    my_process_name = new_file_ext.replace('.shp','')
-                    processed_layer = iface.addVectorLayer(my_process_path, my_process_name, "ogr")
+                    my_process_name = new_file_ext.replace('.shp','')   
+                    
+                    layers_to_discard = []
+                    if 'Points' in my_process_name and '_LN' in my_process_name:
+                        layers_to_discard.append(my_process_name)
+                    if 'Points' in my_process_name and '_PLY' in my_process_name:
+                        layers_to_discard.append(my_process_name)
+                    
+                    if my_process_name not in layers_to_discard:
+                        processed_layer = iface.addVectorLayer(my_process_path, my_process_name, "ogr")
+                        
+                        ###add layers to map in the correct new group                     
+                        myblayer = root.findLayer(processed_layer.id())
+                        myClone = myblayer.clone()
+                        parent = myblayer.parent()
+                        root.findGroup(group_name).insertChildNode(1, myClone)
+                        parent.removeChildNode(myblayer) 
 
+                        ###expand group
+                        group_processed_survey = root.findGroup(group_name)
+                        group_processed_survey.setExpanded(False) # set as false to remove the false true at the creation
+                        group_processed_survey.setExpanded(True)
 
-                    ###add layers to map in the correct new group
-                    added_layer = QgsProject.instance().mapLayersByName(my_process_name)
-                    thelayer = added_layer[0]
-                    myblayer = root.findLayer(thelayer.id())
-                    myClone = myblayer.clone()
-                    parent = myblayer.parent()
-                    root.findGroup(group_name).insertChildNode(1, myClone)
-                    parent.removeChildNode(myblayer) 
+                        progress.setValue(40)
+                        
+                        for child in group_processed_survey.children():
+                            if isinstance(child, QgsLayerTreeLayer):
+                                if child.layer().isValid():
+                                    if child.layer().type() == QgsMapLayer.VectorLayer:
+                                        if child.layer().geometryType() == 0: #POINTS
+                                            with edit(child.layer()):
+                                                for field in child.layer().fields().names():
+                                                    if field == 'PT_X-EAST':
+                                                        idx = child.layer().fields().indexFromName('PT_X-EAST')
+                                                        child.layer().renameAttribute(idx, 'X')
+                                                        child.layer().updateFields()
+                                                    if field == 'PT_Y-NORTH':
+                                                        idx = child.layer().fields().indexFromName('PT_Y-NORTH')
+                                                        child.layer().renameAttribute(idx, 'Y')
+                                                        child.layer().updateFields()
+                                                    if field == 'PT_HEIGHT':
+                                                        idx = child.layer().fields().indexFromName('PT_HEIGHT')
+                                                        child.layer().renameAttribute(idx, 'Z')
+                                                        child.layer().updateFields()
+                                                    if field == 'PT_ELEV':
+                                                        idx = child.layer().fields().indexFromName('PT_ELEV')
+                                                        child.layer().renameAttribute(idx, 'Z')
+                                                        child.layer().updateFields()
+                                        
 
-                    ###expand group
-                    group_processed_survey = root.findGroup(group_name)
-                    group_processed_survey.setExpanded(False) # set as false to remove the false true at the creation
-                    group_processed_survey.setExpanded(True)
+                points_processed_layer_name = 'Points_processed'
+                survey_section_line_process_layer_name = 'Lines_SECTION_LN_processed'
+                survey_section_line_process_layer = None
+                points_process_layer = None
 
-                    progress.setValue(40)
-                    for child in group_processed_survey.children():
-                        if isinstance(child, QgsLayerTreeLayer):
-                            if child.layer().isValid():
-                                if child.layer().type() == QgsMapLayer.VectorLayer:
-                                    if child.layer().geometryType() == 0: #POINTS
-                                        with edit(child.layer()):
-                                            for field in child.layer().fields().names():
-                                                if field == 'PT_X-EAST':
-                                                    idx = child.layer().fields().indexFromName('PT_X-EAST')
-                                                    child.layer().renameAttribute(idx, 'X')
-                                                    child.layer().updateFields()
-                                                if field == 'PT_Y-NORTH':
-                                                    idx = child.layer().fields().indexFromName('PT_Y-NORTH')
-                                                    child.layer().renameAttribute(idx, 'Y')
-                                                    child.layer().updateFields()
-                                                if field == 'PT_HEIGHT':
-                                                    idx = child.layer().fields().indexFromName('PT_HEIGHT')
-                                                    child.layer().renameAttribute(idx, 'Z')
-                                                    child.layer().updateFields()
-                                                    
-                                                if field == 'PT_ELEV':
-                                                    idx = child.layer().fields().indexFromName('PT_ELEV')
-                                                    child.layer().renameAttribute(idx, 'Z')
-                                                    child.layer().updateFields()
-       
+                # Check if the group exists
+                if group_processed_survey is not None:
+                    # Get a list of all layers in the group
+                    group_layers = group_processed_survey.findLayers()
+
+                    # Search for the layer with the given name inside the group
+                    for layer in group_layers:
+                        if layer.name() == points_processed_layer_name:
+                            points_process_layer = QgsProject.instance().mapLayersByName("Points_processed")[0]
+                        if layer.name() == survey_section_line_process_layer_name:
+                            survey_section_line_process_layer = QgsProject.instance().mapLayersByName("Lines_SECTION_LN_processed")[0]
+                    
+                    if survey_section_line_process_layer is not None:
+                        if 'sec_level' not in [field.name() for field in survey_section_line_process_layer.fields()]:
+                            resadd = survey_section_line_process_layer.dataProvider()
+                            resadd.addAttributes([QgsField('sec_level', QVariant.Double)])
+                            survey_section_line_process_layer.updateFields()
+                    
+                    if points_process_layer is not None:
+                        if survey_section_line_process_layer is not None:
+                            survey_section_line_process_layer.startEditing()
+                            
+                            e = QgsExpression( '''
+                            array_to_string(
+                            aggregate(
+                            layer:='Points_processed',
+                            aggregate:='array_agg',
+                            expression:="Z",
+                            filter:=
+                             "PT_CODE" ilike 'SECTION' and 
+                            contains(buffer($geometry, 0.2), end_point(geometry(@parent)))
+                            ))
+                            ''')
+                        
+                            context = QgsExpressionContext()
+                            context.appendScopes(QgsExpressionContextUtils.globalProjectLayerScopes(survey_section_line_process_layer))
+                        
+                            for f in survey_section_line_process_layer.getFeatures():
+                                context.setFeature(f)
+                                f['sec_level'] = e.evaluate( context )
+                                survey_section_line_process_layer.updateFeature(f)
+
+                            # Commit changes to survey_section_line_process_layer
+                            survey_section_line_process_layer.commitChanges()
+           
             progress.setValue(100)
             ##ending time
             time1= datetime.now()
-
 
             ##duration
             delta = time1-time0
@@ -558,7 +623,6 @@ class PCA_Geomax_processing:
         if self.first_start == True:
             self.first_start = False
 
-            
         # show the dialog
         self.dlgtool2.show()
         # Run the dialog event loop
@@ -568,32 +632,75 @@ class PCA_Geomax_processing:
             #add the action here
 
             ### Copy and paste all the data from the survey processing layer to the corresponding GIS template. ###
-            ### After copying, the survey layer is removed from the TOC                                         ###
+            ### After copying, the survey layer is removed from the TOC                                        ###
             
+            #Create progress bar
+            progressMessageBar = iface.messageBar().createMessage("PCA Geomax Survey Processing Plugin: copying the processed layers into the GIS layers...")
+            progress = QProgressBar()
+            progress.setMaximum(100)
+            progress.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+            progressMessageBar.layout().addWidget(progress)
+            iface.messageBar().pushWidget(progressMessageBar, Qgis.Info)
             
+            progress.setValue(0)
+        
             copied_layers_list = []
+            
             #Interventions polygons
             survey_layer_name = 'Polygon_INTERVENTION_PLY_processed'
             gis_layer = 'Interventions'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(5)
+            else:
+                pass
+                
+                
+            copied_layers_list = []
+            #Interventions polygons
+            survey_layer_name = 'Lines_INTERVENTION_PLY_processed'
+            gis_layer = 'Interventions'
+            if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
+            len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
+                gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(10)
             else:
                 pass 
 
@@ -602,23 +709,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Sections'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(20)
             else:
                 pass 
             
@@ -628,23 +738,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Slopes'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(30)
             else:
                 pass 
 
@@ -653,23 +766,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Levels'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(40)
             else:
                 pass
             
@@ -679,23 +795,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Drawing_Points'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(50)
             else:
                 pass
      
@@ -704,23 +823,26 @@ class PCA_Geomax_processing:
             gis_layer = 'TBM'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(60)
             else:
                 pass
             
@@ -729,23 +851,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Targets'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(70)
             else:
                 pass
             
@@ -755,23 +880,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Small_Finds'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(80)
             else:
                 pass
                             
@@ -780,23 +908,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Environmental'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(90)
             else:
                 pass
 
@@ -806,23 +937,26 @@ class PCA_Geomax_processing:
             gis_layer = 'Stations'
             if len(QgsProject.instance().mapLayersByName(survey_layer_name)) != 0 and \
             len(QgsProject.instance().mapLayersByName(gis_layer)) != 0:
-                survey_data_layer = QgsProject.instance().mapLayersByName(survey_layer_name)[0]
+                survey_layers = QgsProject.instance().mapLayersByName(survey_layer_name)
                 gis_layer = QgsProject.instance().mapLayersByName(gis_layer)[0]
-                if survey_data_layer.isValid() and gis_layer.isValid():
-                        if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
-                        gis_layer.type() == QgsMapLayer.VectorLayer:
-                            iface.setActiveLayer( survey_data_layer ) 
-                            survey_data_layer.selectAll()
-                            iface.actionCopyFeatures().trigger()
-                            iface.setActiveLayer(gis_layer)
-                            gis_layer.startEditing()
-                            iface.actionPasteFeatures().trigger()
-                            gis_layer.commitChanges()
-                            survey_data_layer.removeSelection()
-                            gis_layer.removeSelection()
-                            QgsProject.instance().removeMapLayer(survey_data_layer.id())
-                            gis_layer.updateExtents()
-                            copied_layers_list.append(survey_layer_name)
+                for survey_data_layer in survey_layers:
+                    if survey_data_layer.isValid() and gis_layer.isValid():
+                            if survey_data_layer.type() == QgsMapLayer.VectorLayer and \
+                            gis_layer.type() == QgsMapLayer.VectorLayer:
+                                iface.setActiveLayer( survey_data_layer ) 
+                                survey_data_layer.selectAll()
+                                iface.actionCopyFeatures().trigger()
+                                iface.setActiveLayer(gis_layer)
+                                gis_layer.startEditing()
+                                iface.actionPasteFeatures().trigger()
+                                gis_layer.commitChanges()
+                                survey_data_layer.removeSelection()
+                                gis_layer.removeSelection()
+                                QgsProject.instance().removeMapLayer(survey_data_layer.id())
+                                gis_layer.updateExtents()
+                                copied_layers_list.append(survey_layer_name)
+                                
+                                progress.setValue(100)
             else:
                 pass
             
@@ -840,6 +974,7 @@ class PCA_Geomax_processing:
                             'PCA Geomax Survey Processing',
                             '''No survey layers were copied into the matching GIS Project layers''') 
             
+            iface.messageBar().clearWidgets()
             copied_layers_list.clear()           
                
     def gpkg_backup(self):
@@ -862,30 +997,39 @@ class PCA_Geomax_processing:
             if len(layers_list)!= 0:
             
                 ref_lyr = iface.activeLayer()
-                if iface.activeLayer().storageType() == 'GPKG':
-                    if ref_lyr.isValid():
-                        if ref_lyr.type() == QgsMapLayer.VectorLayer:
-                            layer_name = ref_lyr.name()
-                            layer_gpkg_name = '|layername='+ref_lyr.name()
-                            layer_path =  (ref_lyr.dataProvider().dataSourceUri())
-                            gpkg_path = layer_path.replace(layer_gpkg_name,'')
-                            gpkg_name = os.path.basename(gpkg_path)
-                            clean_path = gpkg_path.replace(gpkg_name,'')
-                         
-                            #today = (str(date.today()).replace('-',''))
-                            now = datetime.now().strftime("%Y%m%d_%H%M%S")
-                            backup_file_name = now+'_'+gpkg_name        
-                                    
-                            inputgpkg = gpkg_path
-                            outputgpkg = QgsProject.instance().homePath()+'/_Geopackage_Backup/'+backup_file_name
-                            copy(inputgpkg,outputgpkg)
-                            #copy(inputgpkg+'-wal',outputgpkg+'-wal')
-                            #copy(inputgpkg+'-shm',outputgpkg+'-shm')
+                try:
+                    # if ref_lyr is not None:
+                        # if ref_lyr.type() == QgsMapLayer.VectorLayer:
+                            # if iface.activeLayer().storageType() == 'GPKG':
+                                # if ref_lyr.isValid():
+                                
+                    layer_name = ref_lyr.name()
+                    layer_gpkg_name = '|layername='+ref_lyr.name()
+                    layer_path =  (ref_lyr.dataProvider().dataSourceUri())
+                    gpkg_path = layer_path.replace(layer_gpkg_name,'')
+                    gpkg_name = os.path.basename(gpkg_path)
+                    clean_path = gpkg_path.replace(gpkg_name,'')
+                 
+                    #today = (str(date.today()).replace('-',''))
+                    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    backup_file_name = now+'_'+gpkg_name        
+                            
+                    inputgpkg = gpkg_path
+                    outputgpkg = QgsProject.instance().homePath()+'/_Geopackage_Backup/'+backup_file_name
+                    copy(inputgpkg,outputgpkg)
+                    #copy(inputgpkg+'-wal',outputgpkg+'-wal')
+                    #copy(inputgpkg+'-shm',outputgpkg+'-shm')
 
-                            QMessageBox.about(
-                            None,
-                            'PCA Geomax Survey Processing',
-                            '''The backup copy of the GeoGackage {} has been successfully created!'''.format(gpkg_name)) 
+                    QMessageBox.about(
+                    None,
+                    'PCA Geomax Survey Processing',
+                    '''The backup copy of the geopackage {} has been successfully created!'''.format(gpkg_name))
+                except:
+                    QMessageBox.about(
+                                None,
+                                'PCA Geomax Survey Processing',
+                                '''No valid geopackage layer was selected. Please select a valid layer and retry!''')
+                    
     
     def choose_DRS_update_type(self):
         # if self.first_start == True:
@@ -914,6 +1058,8 @@ class PCA_Geomax_processing:
         result = self.dlgtool5.exec_()
         # See if OK was pressed
         if result:
+        
+    
         
             DRS_Table_on_GIS = self.dlgtool5.DRS_on_GIS_comboBox.currentLayer() 
             new_DRS_csv_file = self.dlgtool5.DRS_new_file_mQgsFileWidget.filePath()
@@ -945,9 +1091,6 @@ class PCA_Geomax_processing:
                             for f in external_DRS_CSV.getFeatures():
                                 context_list.append(f['Context'])
                                 
-                            print (context_list)
-                            
-                            
                             matching_features_ids = []
                             for n in context_list:
                                 for f in CSV_table.getFeatures():
@@ -961,12 +1104,12 @@ class PCA_Geomax_processing:
                             # for l in CSV_table.selectedFeatures():
                                 # print (l['Context'])
                                     
-                          
-                            with edit(CSV_table):
-                                
+                            if not CSV_table.isEditable():
+                                CSV_table.startEditing()
+                                    
                                 for d in matching_features_ids:
                                     CSV_table.deleteFeature(d)
-                            
+                                
                             iface.setActiveLayer( external_DRS_CSV ) 
                             external_DRS_CSV.selectAll()
                             iface.actionCopyFeatures().trigger()
@@ -976,8 +1119,9 @@ class PCA_Geomax_processing:
                             CSV_table.commitChanges()
                             external_DRS_CSV.removeSelection()
                             CSV_table.removeSelection()
-                            QgsProject.instance().removeMapLayer(external_DRS_CSV.id())                   
+                            QgsProject.instance().removeMapLayer(external_DRS_CSV.id()) 
                             
+                               
                             QMessageBox.about(
                             None,
                             'PCA Geomax Survey Processing',
@@ -1046,9 +1190,10 @@ class PCA_Geomax_processing:
 
                             # for l in CSV_table.selectedFeatures():
                                 # print (l['Trench Number'])
-                                    
-                          
-                            with edit(CSV_table):
+                            
+                            
+                            if not CSV_table.isEditable():
+                                CSV_table.startEditing()
                                 
                                 for d in matching_features_ids:
                                     CSV_table.deleteFeature(d)
