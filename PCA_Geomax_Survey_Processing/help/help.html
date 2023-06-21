@@ -61,7 +61,7 @@
 			<p><img src="../icons/geomax_processing_copy_paste_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;"> A tool to copy and paste all the new data from the survey processed layers to the corresponding GIS layers.</p>
 		  </li>
 		  <li>
-			<p><img src="../icons/geomax_update_DRS_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;" > A tool to automatically update the DRS_Table from an external CSV file.</p>
+			<p><img src="../icons/geomax_update_DRS_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;" > A tool to automatically update the DRS databases from an external CSV file.</p>
 		  </li>
 		  <li>
 		    <p><img src="../icons/geomax_backup_gpkg_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;" > A tool to create a backup copy of the active Geopackage.</p>
@@ -132,16 +132,21 @@
 		<p style="text-align: center;"><img src="img/step_03_02.png" alt=" " style="width:2500px;height:auto;" ></p>
 		</br>
 		<p class='step'>Step 4</p>
-		<p>Since the live version of the DRS Spreadsheets are contained into the main geopackage, a dedicated tool <img src="../icons/geomax_update_DRS_icon.png" alt="" width="100" height="100" > to help the update of the spreadsheets is available in the toolbar.</p>
-		<p>Running the tool will open a dialogue box where is possible to select which DRS register ((DRS_Table for the Context register or DRS_Trench_Sheets for the Trench Sheet Register) is going to be updated:<br><br>
+		<p>Since the live version of the DRS databases are contained into the main geopackage, a dedicated tool <img src="../icons/geomax_update_DRS_icon.png" alt="" width="100" height="100" > to help the update of the spreadsheets is available in the toolbar.</p>
+		<p>Running the tool will open a dialogue box where is possible to select which DRS database (DRS_COntext_Database for the Context list or DRS_Trench_Database for the Trench Sheet database) is going to be updated:<br><br>
 		<p style="text-align: center;"><img src="img/step_04_001.png" alt=" " style="width:2500px;height:auto;" ></p>
 		</br>
-		<p>Both buttons will open a similar dialogue where the desired DRS spreadsheet is preselected in the dropdown dedicated list.</br>On the dialogue is possible to select:</p>
+		<p>Both buttons will open a similar dialogue where the desired DRS spreadsheet is preselected in the dropdown dedicated list.</p>
+		<p style="text-align: center;"><img src="img/step_04_01b.png" alt=" " style="width:2500px;height:auto;"></p>
+		</br>
+		<p>On the dialogue is possible to select:</p>
 		<ul style="list-style: none;">
 			<li>
-			<p>a.	the active DRS_Table from the GIS layer list that will be overwritten.</p></li>
+			<p>a.	the active DRS database from the GIS layer list that will be overwritten.</p></li>
 			<li><p>b.	an external .CSV file containing the update version of the cloud DRS Spreadsheet (usually downloaded from the DRS Google Cloud). To select the file, press <img src="img/folder_select.png" alt="" width="75" height="75" > and, on the Explorer window, navigate to the location of the selected file.</p></li>
 		</ul>
+		
+		</br>
 		<p>A message will confirm the success of the operation. </p>
 		<p style="text-align: center;"><img src="img/step_04_02.png" alt=" " style="width:2500px;height:auto;"></p>
 		</br>

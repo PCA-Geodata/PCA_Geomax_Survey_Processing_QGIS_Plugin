@@ -95,7 +95,7 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -127,7 +127,7 @@
     <item row="0" column="1">
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Automatically update the GIS DRS tables from an external CSV file containing the updated cloud DRS spreadsheet.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Select the typology of DRS spreadsheet to update to continue.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Automatically update the GIS DRS databases from an external CSV file containing the updated cloud DRS spreadsheet.&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Select the typology of DRS database to update to continue.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>
@@ -175,7 +175,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Update DRS Context Table</string>
+         <string>Update DRS Context Database</string>
         </property>
        </widget>
       </item>
@@ -215,7 +215,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Update DRS Trench Sheet</string>
+         <string>Update DRS Trench Database</string>
         </property>
        </widget>
       </item>

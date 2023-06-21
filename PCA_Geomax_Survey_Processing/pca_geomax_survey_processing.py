@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 /***************************************************************************
  PCA_Geomax_processing
@@ -334,7 +336,7 @@ class PCA_Geomax_processing:
                 new_processed_path = second_interm_path.replace(third_last_folder,'')
 
                 
-                directory = "processed_shapefiles_123" # new folder name
+                directory = "processed_shapefiles" # new folder name
                 global path  #new path
                 path = os.path.join(new_processed_path,directory)
 
@@ -1043,14 +1045,31 @@ class PCA_Geomax_processing:
         # if self.first_start == True:
            # self.first_start = False
 
-        if len(QgsProject.instance().mapLayersByName('DRS_Table')) == 0:
+        # if len(QgsProject.instance().mapLayersByName('DRS_Table')) == 0:
+            # return self.dontdonothing
+        # else: 
+            # DRS_context = QgsProject.instance().mapLayersByName("DRS_Table")[0]
+            
+        # Attempt to get the layer from the project
+        layers = QgsProject.instance().mapLayersByName('DRS_Context_Database')
+
+        if layers:
+            # Layer found, assign the first layer
+            layer = layers[0]
+        else:
+            # Layer doesn't exist, assign another layer or handle the error
+            layers = QgsProject.instance().mapLayersByName('DRS_Table')
+            
+            if layers:
+                layer = layers[0]
+            else:
+                # Neither layer exists, handle the error
+                layer = None
+
+        if not layer:
             return self.dontdonothing
-        else: 
-            DRS_context = QgsProject.instance().mapLayersByName("DRS_Table")[0]
-        
-        
-        
-            self.dlgtool5.DRS_on_GIS_comboBox.setLayer(DRS_context)
+        if layer:
+            self.dlgtool5.DRS_on_GIS_comboBox.setLayer(layer)
         
         # show the dialog
         self.dlgtool5.show()
@@ -1065,7 +1084,7 @@ class PCA_Geomax_processing:
             new_DRS_csv_file = self.dlgtool5.DRS_new_file_mQgsFileWidget.filePath()
             
             if len(DRS_Table_on_GIS.name()) == 0:
-                QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
+                QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS dataabase was selected. Please select a layer.')
                 return self.dontdonothing()
              
             else:
@@ -1125,19 +1144,42 @@ class PCA_Geomax_processing:
                             QMessageBox.about(
                             None,
                             'PCA Geomax Survey Processing',
-                            '''The GIS DRS Context spreadsheet (DRS_Table) has been successfully updated!''') 
+                            '''The GIS <strong>DRS Context Database</strong> has been successfully updated!''') 
                             
     def update_DRS_Trench_sheet_table(self):
         # if self.first_start == True:
            # self.first_start = False
-        if len(QgsProject.instance().mapLayersByName('DRS_Trench_sheet')) == 0:
+        # if len(QgsProject.instance().mapLayersByName('DRS_Trench_sheet')) == 0:
+            # return self.dontdonothing
+        # else: 
+            # DRS_trench_sheet = QgsProject.instance().mapLayersByName("DRS_Trench_sheet")[0]
+            # self.dlgtool6.DRS_on_GIS_comboBox.setLayer(DRS_trench_sheet)
+            
+             
+        # Attempt to get the layer from the project
+        layers = QgsProject.instance().mapLayersByName('DRS_Trench_Database')
+
+        if layers:
+            # Layer found, assign the first layer
+            layer = layers[0]
+        else:
+            # Layer doesn't exist, assign another layer or handle the error
+            layers = QgsProject.instance().mapLayersByName('DRS_Trench_sheet')
+            
+            if layers:
+                layer = layers[0]
+            else:
+                # Neither layer exists, handle the error
+                layer = None
+
+        if not layer:
             return self.dontdonothing
-        else: 
-            DRS_trench_sheet = QgsProject.instance().mapLayersByName("DRS_Trench_sheet")[0]
-        
-        
-        
-            self.dlgtool6.DRS_on_GIS_comboBox.setLayer(DRS_trench_sheet)
+        if layer:
+            self.dlgtool6.DRS_on_GIS_comboBox.setLayer(layer)    
+            
+            
+            
+            
         # show the dialog
         self.dlgtool6.show()
         # Run the dialog event loop
@@ -1149,7 +1191,7 @@ class PCA_Geomax_processing:
             new_DRS_csv_file = self.dlgtool6.DRS_new_file_mQgsFileWidget.filePath()
                  
             if len(DRS_Table_on_GIS.name()) == 0:
-                QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS table was selected. Please select a layer.')
+                QMessageBox.about(None,'PCA Geomax Survey Processing', 'No valid DRS database was selected. Please select a layer.')
                 return self.dontdonothing()
              
             else:
@@ -1212,7 +1254,7 @@ class PCA_Geomax_processing:
                             QMessageBox.about(
                             None,
                             'PCA Geomax Survey Processing',
-                            '''The GIS DRS Trench Sheet spreadsheet (DRS_Trench_sheet) has been successfully updated!''') 
+                            '''The GIS <strong>DRS Trench Database</strong> has been successfully updated!''') 
 
     def help_show(self):
        
