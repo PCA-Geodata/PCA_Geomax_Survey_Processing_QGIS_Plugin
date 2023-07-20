@@ -8,11 +8,11 @@
 		}
 			
 		h1 {
-			font-size: 3vw;
+			font-size: 1.5vw;
 		}
 			
 		p {
-		font-size: 50px;}
+		font-size: 20px;}
 
 		.step {
 		font-size: 6vm;
@@ -42,7 +42,7 @@
 	</br>
 	</br>
     <h1 style="text-align: center; font-family: Helvetica;"><strong>Help for PCA Geomax Survey Processing QGIS Plugin</strong></h1>
-	<p style="text-align:center;"><img src="img/PCA_geomax_plugin_toolbar_v3.png" alt="Plugin Toolbar" style="height:500px;" >
+	<p style="text-align:center;"><img src="img/PCA_geomax_plugin_toolbar_v3.png" alt="Plugin Toolbar" style="height:200px;" >
     <br><br>
 	<div class="centered-text">
 		<div>
@@ -55,16 +55,16 @@
 		<p class='step'>The plugin consists of four tools contained in a dedicated toolbar:</p>
 		<ul style="list-style: none;">
 		  <li>
-			<p><img src="../icons/geomax_processing_import_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;"> A tool to process and import the raw survey shapefiles generated from the Geomax into the GIS project. </p>
+			<p><img src="../icons/geomax_processing_import_icon.png" alt="Plugin Toolbar" style="width:200px;height:auto;"> A tool to process and import the raw survey shapefiles generated from the Geomax into the GIS project. </p>
 		  </li>
 		  <li>
-			<p><img src="../icons/geomax_processing_copy_paste_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;"> A tool to copy and paste all the new data from the survey processed layers to the corresponding GIS layers.</p>
+			<p><img src="../icons/geomax_processing_copy_paste_icon.png" alt="Plugin Toolbar" style="width:200px;height:auto;"> A tool to copy and paste all the new data from the survey processed layers to the corresponding GIS layers.</p>
 		  </li>
 		  <li>
-			<p><img src="../icons/geomax_update_DRS_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;" > A tool to automatically update the DRS databases from an external CSV file.</p>
+			<p><img src="../icons/geomax_update_DRS_icon.png" alt="Plugin Toolbar" style="width:200px;height:auto;" > A tool to automatically update the DRS databases from an external CSV file.</p>
 		  </li>
 		  <li>
-		    <p><img src="../icons/geomax_backup_gpkg_icon.png" alt="Plugin Toolbar" style="width:300px;height:auto;" > A tool to create a backup copy of the active Geopackage.</p>
+		    <p><img src="../icons/geomax_backup_gpkg_icon.png" alt="Plugin Toolbar" style="width:200px;height:auto;" > A tool to create a backup copy of the active Geopackage.</p>
 		  </li>
 		</ul>
 		</br>
@@ -75,7 +75,7 @@
 		<p class='step'>Step 1</p>
 		</br>
 		<p>1.1 - From the cloud, download the zip file containing the raw survey data exported in shapefile format from Geomax.</p>
-		<p style="text-align: center;"><img src="img/step_01_image_01.png" alt="" style="width:1200px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_01_image_01.png" alt="" style="width:750px;height:auto;" ></p>
 		<p>
 		1.2 - On the project folder, navigate to  <span class="emphasized">…Project Data\04_Survey\Dated folders for processing\</span>.
 		Here copy and paste the template folder SITECODE_YEARMONTHDAY and rename it according to the required format. 
@@ -90,30 +90,30 @@
 		</br>
 		<p>Open the QGIS site plan project and run the tool <img src="../icons/geomax_processing_import_icon.png" alt="Plugin Toolbar" width="100" height="100" >.</p>
 		<p>	After an opening dialogue that describes what this tool do 
-		<p style="text-align: center;"><img src="img/step_02_01.png" alt="" style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_02_01.png" alt="" style="width:1000px;height:auto;" ></p>
 		<p> By pressing OK, an Explorer window will open. Navigate to the folder containing the imported zip. (<span class="emphasized"> e.g., …\Project Data\04_Survey\Dated folders for processing\raw data\SHP\SDFSF22_20220728\SDFSF22_20220728_SHP</span>)
-		<p style="text-align: center;"><img src="img/step_02_01b.png" alt=" "  style="width:2500px;height:auto;" >
+		<p style="text-align: center;"><img src="img/step_02_01b.png" alt=" "  style="width:1000px;height:auto;" >
 		</br>
 		<p>The tool will generate automatically:</p>
 		</br>
 		<p>a) a new subfolder in your daily parent folder called `Processed_shapefiles` that contains a processed copy of the raw shapefiles (Coordinates Reference System corrected to EPSG:27700, field name formatted to respect the QGIS Template)</p>
-		<p style="text-align: center;"><img src="img/step_2_02.png" alt=" " style="width:1200px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_2_02.png" alt=" " style="width:750px;height:auto;" ></p>
 		</br>
 		<p>b) a new group in the QGIS project called `survey_data_temp_JOB NAME` where JOB NAME is the job name retrieved from the zip file name.</p>
-		<p style="text-align: center;"><img src="img/step_2_03.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_2_03.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		<p>This group will contain the processed shapefiles ready to be used in the QGIS project for data processing. If one or more empty layers were generated from the Geomax, they will be excluded from the importing.</p>
 		</br>
 		<p>A message will confirm the success of the operation, providing also a list of the excluded layers.<p> 
-		<p style="text-align: center;"><img src="img/step_02_04.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_02_04.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br></br>
 		<p class='step'>Errors and exceptions</p>
 		<p>If the selected folder doesn’t contain any shapefile an error message will appear:</p>
-		<p style="text-align: center;"><img src="img/step_02_05.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_02_05.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		<p>If the plugin is reused on the same raw shapefile folder, it will rise a warning message:</p>
 		<br><br>
-		<p style="text-align: center;"><img src="img/step_02_06.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_02_06.png" alt=" " style="width:1000px;height:auto;" ></p>
 		<br><br>
 		<p>The message informs that the ‘Processed folder’ for this job file already exists and that the use of the tool will overwrite it, deleting also possible edits done on the processed layers. 
 		If ‘Yes’ is selected, an Explorer window will automatically open at the folder address, to consent the user to manually delete the folder before re-run the plugin.</p>
@@ -122,22 +122,22 @@
 		</br>
 		<p>Run the tool <img src="../icons/geomax_processing_copy_paste_icon.png" alt="" width="100" height="100" > from the PCA Geomax Survey Processing plugin.</p>
 		<p>	After an opening dialogue that describes what this tool do 
-		<p style="text-align: center;"><img src="img/step_03_00.png" alt="" style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_03_00.png" alt="" style="width:1000px;height:auto;" ></p>
 		<p> this tool will copy and paste all the data from the survey processed layers into the corresponding GIS layers (e.g., from Polygon_INTERVENTION_PLY_processed' and Lines_INTERVENTION_PLY_processed'to 'Interventions', from 'Lines_SECTION_LN_processed' to 'Sections' and from 'Points_LEVELS_PT_processed' to 'Levels').</p>
 		<p>After being successfully copied, the survey processed layer is removed from the TOC. A message will confirm the success of the operation, providing also a list of the copied layers. </p>
-		<p style="text-align: center;"><img src="img/step_03_01.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_03_01.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		<p> Not all the layers will be copied because some of them do have not a corresponding GIS layer. </br></br> For example, while in QGIS Archaeological Features, Modern, Layers, etc.… are recorded as polygons, on site are surveyed as lines. This will generate some linear processed layers without any correspondence with the GIS layers. These layers will stay available in the project as background data for helping during the digitizing of the features.</p>
 		<p>If no matching layers were found, the tool will return a different message.</p>
-		<p style="text-align: center;"><img src="img/step_03_02.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_03_02.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		<p class='step'>Step 4</p>
 		<p>Since the live version of the DRS databases are contained into the main geopackage, a dedicated tool <img src="../icons/geomax_update_DRS_icon.png" alt="" width="100" height="100" > to help the update of the spreadsheets is available in the toolbar.</p>
 		<p>Running the tool will open a dialogue box where is possible to select which DRS database (DRS_COntext_Database for the Context list or DRS_Trench_Database for the Trench Sheet database) is going to be updated:<br><br>
-		<p style="text-align: center;"><img src="img/step_04_001.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_04_001.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		<p>Both buttons will open a similar dialogue where the desired DRS spreadsheet is preselected in the dropdown dedicated list.</p>
-		<p style="text-align: center;"><img src="img/step_04_01b.png" alt=" " style="width:2500px;height:auto;"></p>
+		<p style="text-align: center;"><img src="img/step_04_01b.png" alt=" " style="width:1000px;height:auto;"></p>
 		</br>
 		<p>On the dialogue is possible to select:</p>
 		<ul style="list-style: none;">
@@ -148,7 +148,7 @@
 		
 		</br>
 		<p>A message will confirm the success of the operation. </p>
-		<p style="text-align: center;"><img src="img/step_04_02.png" alt=" " style="width:2500px;height:auto;"></p>
+		<p style="text-align: center;"><img src="img/step_04_02.png" alt=" " style="width:1000px;height:auto;"></p>
 		</br>
 		<p class='step'>Step 5</p>
 		</br>
@@ -156,12 +156,12 @@
 		<p>To use it, just select any of the GIS layers from the Layer panel. The tool will generate automatically a new backup copy of the active geopackage, renamed using the format ‘DATE_TIME_geopackagename’, in the folder  <span class="emphasized">……\Project Data\03_GIS_Projects\03_GIS_Site_Plan\_Geopackage_Backup<span>.<p>
 		</br>
 		<p>A message will confirm the success of the operation.</p>
-		<p style="text-align: center;"><img src="img/step_05_01.png" alt=" " style="width:2500px;height:auto;" ></p>
+		<p style="text-align: center;"><img src="img/step_05_01.png" alt=" " style="width:1000px;height:auto;" ></p>
 		</br>
 		</br>
 	</div>
     <div style="background-color:orange;  padding: 5px; color:black; text-align: center;">
-		<p style='font-size:50px;'>For any issue or feature request please contact <a href = "mailto: geospatialdata@pre-construct.com"><strong>geospatialdata@pre-construct.com</strong></a></p>
+		<p style='font-size:25px;'>For any issue or feature request please contact <a href = "mailto: geospatialdata@pre-construct.com"><strong>geospatialdata@pre-construct.com</strong></a></p>
 	</div>
   </body>
 </html>
