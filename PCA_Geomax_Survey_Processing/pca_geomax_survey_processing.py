@@ -633,6 +633,11 @@ class PCA_Geomax_processing:
         if result:
             #add the action here
 
+
+            # Set the current ovelap snapping settings to Avoid Overlap
+            QgsProject.instance().setAvoidIntersectionsMode(QgsProject.AvoidIntersectionsMode(0))
+
+
             ### Copy and paste all the data from the survey processing layer to the corresponding GIS template. ###
             ### After copying, the survey layer is removed from the TOC                                        ###
             
